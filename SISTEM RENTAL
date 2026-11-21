@@ -1,0 +1,171 @@
+class Kendaraan:
+    # Class attribute
+    nama_rental = "UNIBA Rent Car"
+    total_unit = 0
+
+    def __init__(self, kode_unit, nama_kendaraan, harga_sewa):
+        self.kode_unit = kode_unit              # Public attribute
+        self.nama_kendaraan = nama_kendaraan    # Public attribute
+        self.__harga_sewa = 0                   # Private attribute (Encapsulation)
+        self.harga_sewa = harga_sewa            # Memanggil setter untuk validasi
+        self.status_tersedia = True             # Status ketersediaan unit
+        Kendaraan.total_unit += 1
+
+    # Menggunakan @property (Getter)
+    @property
+    def harga_sewa(self):
+        return self.__harga_sewa
+
+    # Menggunakan @harga_sewa.setter (Setter dengan validasi)
+    @harga_sewa.setter
+    def harga_sewa(self, harga_baru):
+        if harga_baru > 0:
+            self.__harga_sewa = harga_baru
+        else:
+            print(f"[Peringatan] Harga sewa untuk {self.nama_kendaraan} tidak valid! Diatur ke Rp100.000.")
+            self.__harga_sewa = 100000
+
+    # Instance method
+    def info_kendaraan(self):
+        status = "Tersedia" if self.status_tersedia else "Disewa"
+        print(f"Kode: {self.kode_unit:<6} | Unit: {self.nama_kendaraan:<18} | Tarif/Hari: Rp{self.__harga_sewa:<9,} | Status: {status}")
+
+    # Menggunakan @classmethod
+    @classmethod
+    def info_rental(cls):
+        print(f"Nama Usaha  : {cls.nama_rental}")
+        print(f"Total Armada: {cls.total_unit} Unit")
+
+    # Menggunakan @staticmethod
+    @staticmethod
+    def hitung_total_bayar(harga_per_hari, lama_sewa):
+        total = harga_per_hari * lama_sewa
+        # Diskon 10% jika menyewa 3 hari atau lebih
+        if lama_sewa >= 3:
+            total = total * 0.9
+        return int(total)
+
+
+class SistemRental:
+    def __init__(self):
+        self.daftar_kendaraan = []
+
+    def tambah_kendaraan(self, kendaraan):
+        self.daftar_kendaraan.append(kendaraan)
+
+    def tampilkan_armada(self):
+        print("\n" + "=" * 75)
+        Kendaraan.info_rental()
+        print("=" * 75)
+        if not self.daftar_kendaraan:
+            print("Belum ada armada kendaraan yang terdaftar.")
+        else:
+            for unit in self.daftar_kendaraan:
+                unit.info_kendaraan()
+        print("=" * 75)
+
+    def proses_sewa(self, kode_unit, nama_penyewa, lama_sewa):
+        for unit in self.daftar_kendaraan:
+            if unit.kode_unit.upper() == kode_unit.upper():
+                if unit.status_tersedia:
+                    unit.status_tersedia = False
+                    total_biaya = Kendaraan.hitung_total_bayar(unit.harga_sewa, lama_sewa)
+                    print("\n--- STRUK TRANSAKSI RENTAL ---")
+                    print(f"Penyewa    : {nama_penyewa}")
+                    print(f"Kendaraan  : {unit.nama_kendaraan} ({unit.kode_unit})")
+                    print(f"Lama Sewa  : {lama_sewa} Hari")
+                    if lama_sewa >= 3:
+                        print("Keterangan : Mendapat diskon 10% (sewa >= 3 hari)")
+                    print(f"Total Bayar: Rp{total_biaya:,}")
+                    print("------------------------------")
+                else:
+                    print(f"\n[Maaf] Unit {unit.nama_kendaraan} sedang disewa orang lain.")
+                return
+        print("\n[Error] Kode unit kendaraan tidak ditemukan.")
+
+    def pengembalian_unit(self, kode_unit):
+        for unit in self.daftar_kendaraan:
+            if unit.kode_unit.upper() == kode_unit.upper():
+                if not unit.status_tersedia:
+                    unit.status_tersedia = True
+                    print(f"\n[Sukses] Unit {unit.nama_kendaraan} telah dikembalikan dan tersedia kembali.")
+                else:
+                    print(f"\n[Info] Unit {unit.nama_kendaraan} memang sedang tidak disewa.")
+                return
+        print("\n[Error] Kode unit kendaraan tidak ditemukan.")
+
+    def ubah_tarif_unit(self, kode_unit, tarif_baru):
+        for unit in self.daftar_kendaraan:
+            if unit.kode_unit.upper() == kode_unit.upper():
+                unit.harga_sewa = tarif_baru  # Menguji fungsi @harga_sewa.setter
+                print(f"\n[Sukses] Tarif sewa {unit.nama_kendaraan} berhasil diperbarui.")
+                return
+        print("\n[Error] Kode unit kendaraan tidak ditemukan.")
+
+
+# ==========================================
+# MENU INTERAKTIF UTAMA
+# ==========================================
+if __name__ == "__main__":
+    rental = SistemRental()
+
+    # Data awal bawaan agar saat didemokan daftar armada tidak kosong
+    rental.tambah_kendaraan(Kendaraan("K01", "Toyota Avanza", 350000))
+    rental.tambah_kendaraan(Kendaraan("K02", "Honda Brio", 300000))
+    rental.tambah_kendaraan(Kendaraan("M01", "Yamaha NMAX", 150000))
+
+    while True:
+        print("\n=== MENU SISTEM RENTAL KENDARAAN ===")
+        print("1. Tampilkan Daftar Armada")
+        print("2. Tambah Armada Baru")
+        print("3. Proses Penyewaan Kendaraan")
+        print("4. Pengembalian Kendaraan")
+        print("5. Ubah Tarif Sewa (Tes Setter)")
+        print("6. Keluar")
+
+        pilihan = input("Pilih menu (1-6): ")
+
+        if pilihan == "1":
+            rental.tampilkan_armada()
+
+        elif pilihan == "2":
+            kode = input("Masukkan Kode Unit (cth: K03) : ")
+            nama = input("Masukkan Nama Kendaraan     : ")
+            try:
+                harga = int(input("Masukkan Tarif per Hari (Rp): "))
+                unit_baru = Kendaraan(kode, nama, harga)
+                rental.tambah_kendaraan(unit_baru)
+                print("Armada baru berhasil ditambahkan!")
+            except ValueError:
+                print("[Error] Tarif sewa harus berupa angka!")
+
+        elif pilihan == "3":
+            rental.tampilkan_armada()
+            kode_sewa = input("Masukkan Kode Unit yang disewa: ")
+            penyewa = input("Masukkan Nama Penyewa         : ")
+            try:
+                hari = int(input("Lama Sewa (Hari)              : "))
+                if hari > 0:
+                    rental.proses_sewa(kode_sewa, penyewa, hari)
+                else:
+                    print("[Error] Lama sewa minimal 1 hari.")
+            except ValueError:
+                print("[Error] Lama sewa harus berupa angka!")
+
+        elif pilihan == "4":
+            kode_kembali = input("Masukkan Kode Unit yang dikembalikan: ")
+            rental.pengembalian_unit(kode_kembali)
+
+        elif pilihan == "5":
+            kode_edit = input("Masukkan Kode Unit yang diubah tarifnya: ")
+            try:
+                tarif_revisi = int(input("Masukkan Tarif Sewa Baru (Rp)          : "))
+                rental.ubah_tarif_unit(kode_edit, tarif_revisi)
+            except ValueError:
+                print("[Error] Tarif harus berupa angka!")
+
+        elif pilihan == "6":
+            print("Terima kasih telah menggunakan Sistem Rental. Program selesai!")
+            break
+        else:
+            print("[Error] Pilihan menu tidak valid, silakan pilih angka 1-6.")
